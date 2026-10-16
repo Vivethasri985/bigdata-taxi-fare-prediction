@@ -1,0 +1,143 @@
+services:
+
+  namenode:
+    image: apache/hadoop:3.4.3
+    container_name: surgesense-namenode
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+
+    volumes:
+      # Hadoop configuration
+      - D:/DockerHadoop/config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - D:/DockerHadoop/config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+
+      # Trip dataset source (2023-2026) - read only
+      - D:/SurgeSense_Data_Backup/full_trips:/data/trips:ro
+
+      # Weather dataset source - read only
+      - D:/SurgeSense_Data_Backup/weather:/data/weather:ro
+
+      # Reference dataset source - read only
+      - D:/SurgeSense_Data_Backup/reference:/data/reference:ro
+
+      # NameNode metadata storage
+      - D:/DockerHadoop/namenode:/hadoop/dfs/name
+
+    networks:
+      - surgesense-net
+
+
+  datanode1:
+    image: apache/hadoop:3.4.3
+    user: root
+    container_name: surgesense-datanode1
+    hostname: datanode1
+    command: ["hdfs", "datanode"]
+
+    depends_on:
+      - namenode
+
+    volumes:
+      # Hadoop configuration
+      - D:/DockerHadoop/config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - D:/DockerHadoop/config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+
+      # HDFS block storage
+      - datanode1_data:/hadoop/dfs/data
+
+    networks:
+      - surgesense-net
+
+
+  datanode2:
+    image: apache/hadoop:3.4.3
+    user: root
+    container_name: surgesense-datanode2
+    hostname: datanode2
+    command: ["hdfs", "datanode"]
+
+    depends_on:
+      - namenode
+
+    volumes:
+      # Hadoop configuration
+      - D:/DockerHadoop/config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - D:/DockerHadoop/config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+
+      # HDFS block storage
+      - datanode2_data:/hadoop/dfs/data
+
+    networks:
+      - surgesense-net
+
+
+  spark-master:
+    image: apache/spark:3.5.6
+    container_name: surgesense-spark-master
+    hostname: spark-master
+
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+
+    depends_on:
+      - namenode
+
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+      - "4040:4040"
+
+    volumes:
+      # Hadoop configuration for HDFS access
+      - D:/DockerHadoop/config/core-site.xml:/opt/spark/conf/core-site.xml:ro
+      - D:/DockerHadoop/config/hdfs-site.xml:/opt/spark/conf/hdfs-site.xml:ro
+
+      # Spark applications
+      - D:/DockerHadoop/spark-apps:/opt/spark/apps
+
+    networks:
+      - surgesense-net
+
+
+  spark-worker:
+    image: apache/spark:3.5.6
+    container_name: surgesense-spark-worker
+    hostname: spark-worker
+
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - spark://spark-master:7077
+
+    depends_on:
+      - spark-master
+
+    environment:
+      SPARK_WORKER_CORES: "2"
+      SPARK_WORKER_MEMORY: "2g"
+
+    volumes:
+      # Hadoop configuration for HDFS access
+      - D:/DockerHadoop/config/core-site.xml:/opt/spark/conf/core-site.xml:ro
+      - D:/DockerHadoop/config/hdfs-site.xml:/opt/spark/conf/hdfs-site.xml:ro
+
+      # Spark applications
+      - D:/DockerHadoop/spark-apps:/opt/spark/apps
+
+    networks:
+      - surgesense-net
+
+
+networks:
+  surgesense-net:
+    driver: bridge
+
+
+volumes:
+  datanode1_data:
+  datanode2_data:

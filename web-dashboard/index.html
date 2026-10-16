@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Taxi Fare Prediction & Demand Hotspots</title>
+  <link rel="stylesheet" href="style.css?v=3.2">
+  <!-- Local Leaflet & Chart.js -->
+  <link rel="stylesheet" href="leaflet.css">
+  <script src="chart.umd.min.js"></script>
+  <script src="leaflet.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <h1 class="brand-title">NYC TAXI ANALYTICS</h1>
+        <p class="brand-subtitle">Taxi Fare Prediction & Demand Hotspot Analytics</p>
+      </div>
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-target="fare-prediction" role="tab">Fare Prediction</button>
+        <button class="tab-btn" data-target="demand-hotspots" role="tab">Demand Hotspots</button>
+        <button class="tab-btn" data-target="analytics" role="tab">Analytics</button>
+        <button class="tab-btn tab-btn--live" data-target="live-stream" role="tab" id="live-stream-tab">Live Stream</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-container">
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: FARE PREDICTION                                     -->
+    <!-- ============================================================== -->
+    <section id="fare-prediction" class="tab-panel active">
+      <div class="panel-header">
+        <h2>FARE PREDICTION</h2>
+      </div>
+
+      <div class="prediction-grid">
+        <!-- Input Form -->
+        <div class="card form-card">
+          <h3 class="card-title">Trip Characteristics</h3>
+          
+          <form id="fare-form" onsubmit="calculateFare(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pickup-zone">Pickup Zone</label>
+                <select id="pickup-zone" class="form-input" onchange="onRouteZoneChange()">
+                  <option value="Midtown Center" selected>Midtown Center</option>
+                  <option value="Upper East Side South">Upper East Side South</option>
+                  <option value="Upper East Side North">Upper East Side North</option>
+                  <option value="JFK Airport">JFK Airport</option>
+                  <option value="LaGuardia Airport">LaGuardia Airport</option>
+                  <option value="Times Sq/Theatre District">Times Sq/Theatre District</option>
+                  <option value="East Village">East Village</option>
+                  <option value="West Village">West Village</option>
+                  <option value="Penn Station/Madison Sq West">Penn Station/Madison Sq West</option>
+                  <option value="Financial District South">Financial District South</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="dropoff-zone">Dropoff Zone</label>
+                <select id="dropoff-zone" class="form-input" onchange="onRouteZoneChange()">
+                  <option value="JFK Airport" selected>JFK Airport</option>
+                  <option value="Midtown Center">Midtown Center</option>
+                  <option value="Upper East Side South">Upper East Side South</option>
+                  <option value="LaGuardia Airport">LaGuardia Airport</option>
+                  <option value="Times Sq/Theatre District">Times Sq/Theatre District</option>
+                  <option value="East Village">East Village</option>
+                  <option value="West Village">West Village</option>
+                  <option value="Penn Station/Madison Sq West">Penn Station/Madison Sq West</option>
+                  <option value="Financial District South">Financial District South</option>
+                </select>
+                <div id="route-error-msg" style="display:none; color:#dc2626; font-size:12px; margin-top:5px; font-weight:600;">
+                  ⚠️ Pickup and Dropoff locations cannot be identical.
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="trip-distance">Distance (Miles) <span style="font-size:11px;font-weight:400;color:#2563eb;">(Auto-computed from route)</span></label>
+                <input type="number" id="trip-distance" class="form-input" min="0.1" max="50.0" step="0.1" value="16.8" oninput="calculateFare()">
+              </div>
+
+              <div class="form-group">
+                <label for="passengers">Passenger Count</label>
+                <select id="passengers" class="form-input" onchange="calculateFare()">
+                  <option value="1" selected>1 Passenger</option>
+                  <option value="2">2 Passengers</option>
+                  <option value="3">3 Passengers</option>
+                  <option value="4">4 Passengers</option>
+                  <option value="5">5 Passengers</option>
+                  <option value="6">6 Passengers</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pickup-hour">Pickup Time (Hour 0-23)</label>
+                <input type="number" id="pickup-hour" class="form-input" min="0" max="23" value="18" oninput="calculateFare()">
+              </div>
+
+              <div class="form-group">
+                <label for="day-type">Day of Week</label>
+                <select id="day-type" class="form-input" onchange="calculateFare()">
+                  <option value="Weekday" selected>Weekday (Mon-Fri)</option>
+                  <option value="Weekend">Weekend (Sat-Sun)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="weather-condition">Weather Condition</label>
+                <select id="weather-condition" class="form-input" onchange="onWeatherChange()">
+                  <option value="Clear" selected>Clear / Dry (18°C)</option>
+                  <option value="Rain">Precipitation / Rain (12°C)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="temperature">Temperature (°C) <span style="font-size:11px;font-weight:400;color:#64748b;">(Auto-synced)</span></label>
+                <input type="number" id="temperature" class="form-input" min="-10" max="40" step="1" value="18" oninput="calculateFare()">
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Calculate Estimated Fare</button>
+          </form>
+        </div>
+
+        <!-- Prediction Result Display -->
+        <div class="card result-card" id="fare-result-card">
+          <div class="fare-display">
+            <span class="currency-symbol" id="fare-currency-symbol">$</span><span id="predicted-fare-val">24.76</span>
+          </div>
+          <div class="fare-label" id="predicted-fare-label">Estimated Taxi Fare</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: DEMAND HOTSPOTS                                     -->
+    <!-- ============================================================== -->
+    <section id="demand-hotspots" class="tab-panel">
+      <div class="panel-header">
+        <h2>DEMAND HOTSPOTS</h2>
+      </div>
+
+      <!-- Interactive Regime Assignment Tool -->
+      <div class="card regime-card">
+        <h3 class="card-title">Interactive Demand Regime Classification</h3>
+
+        <div class="regime-grid">
+          <div class="regime-inputs">
+            <div class="form-group">
+              <label for="select-regime-zone">Target NYC Zone / Landmark</label>
+              <select id="select-regime-zone" class="form-input" onchange="classifyRegime()">
+                <option value="Times Sq/Theatre District" selected>Times Sq / Theatre District (Midtown)</option>
+                <option value="JFK Airport">JFK Airport (Queens)</option>
+                <option value="Midtown Center">Midtown Center (Manhattan)</option>
+                <option value="Upper East Side South">Upper East Side South</option>
+                <option value="Penn Station/Madison Sq West">Penn Station / Madison Sq West</option>
+                <option value="Lincoln Square East">Lincoln Square East</option>
+                <option value="LaGuardia Airport">LaGuardia Airport (Queens)</option>
+                <option value="East Village">East Village (Manhattan)</option>
+                <option value="Financial District South">Financial District South (Wall St)</option>
+                <option value="Murray Hill">Murray Hill (Manhattan)</option>
+                <option value="West Village">West Village (Manhattan)</option>
+                <option value="Greenpoint">Greenpoint (Brooklyn)</option>
+                <option value="Kips Bay">Kips Bay (Manhattan)</option>
+                <option value="Central Park">Central Park</option>
+                <option value="Central Harlem North">Central Harlem North</option>
+                <option value="Riverdale/North Riverdale/Fieldston">Riverdale / Fieldston (Bronx)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="select-regime-hour">Observation Time / Hour</label>
+              <select id="select-regime-hour" class="form-input" onchange="classifyRegime()">
+                <option value="0">12:00 AM</option>
+                <option value="3">03:00 AM</option>
+                <option value="6">06:00 AM</option>
+                <option value="8">08:00 AM</option>
+                <option value="12">12:00 PM</option>
+                <option value="15">03:00 PM</option>
+                <option value="18" selected>06:00 PM</option>
+                <option value="21">09:00 PM</option>
+                <option value="23">11:00 PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="regime-output-box">
+            <div class="regime-output-label">Assigned Demand Regime</div>
+            <div id="regime-badge" class="regime-status status-high">HIGH-DEMAND HOTSPOT</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Demand Map (Hotspots Tab) -->
+      <div class="card map-card" style="margin-bottom: 24px;">
+        <h3 class="card-title">NYC Demand Hotspot Map</h3>
+        <div id="hotspot-map" class="map-container"></div>
+      </div>
+
+      <!-- Hotspot Charts -->
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <h3 class="card-title">Top 10 Hotspot Zones</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-top-zones"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="card-title">Hourly Demand Pattern</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-hourly-demand"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <h3 class="card-title">Weekday vs. Weekend Demand</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-weekday-weekend"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="card-title">Weather Impact</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-weather-impact"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 3: ANALYTICS                                           -->
+    <!-- ============================================================== -->
+    <section id="analytics" class="tab-panel">
+      <div class="panel-header">
+        <h2>ANALYTICS</h2>
+      </div>
+
+      <!-- Slicing Charts: Distance & Fare Range -->
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <h3 class="card-title">Error by Distance (MAE & RMSE)</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-error-distance"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="card-title">Error by Fare Range (MAE & RMSE)</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-error-fare"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hourly Error Breakdown & Silhouette Curve (All Genuine Data) -->
+      <div class="charts-2col">
+        <div class="card chart-card">
+          <h3 class="card-title">Error by Pickup Hour (MAE)</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-error-hour"></canvas>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <h3 class="card-title">K-Means Silhouette (K = 2 to 8)</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-silhouette"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linear Regression Optimization Table -->
+      <div class="card table-card">
+        <h3 class="card-title">LR: Baseline vs. Tuned</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Evaluation Metric</th>
+              <th>Original (regParam = 0.01)</th>
+              <th>Tuned (regParam = 0.10)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>R-Squared Score (R²)</strong></td>
+              <td>0.799582</td>
+              <td>0.799821</td>
+            </tr>
+            <tr>
+              <td><strong>Root Mean Squared Error (RMSE)</strong></td>
+              <td>$7.7935</td>
+              <td>$7.7889</td>
+            </tr>
+            <tr>
+              <td><strong>Mean Absolute Error (MAE)</strong></td>
+              <td>$4.4118</td>
+              <td>$4.4027</td>
+            </tr>
+            <tr>
+              <td><strong>Tolerance Accuracy (Within ±$2.00)</strong></td>
+              <td>26.0683%</td>
+              <td>26.3034%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- ============================================================== -->
+    <!-- SECTION 4: LIVE STREAM                                        -->
+    <!-- ============================================================== -->
+    <section id="live-stream" class="tab-panel">
+      <div class="panel-header">
+        <h2>LIVE STREAM</h2>
+      </div>
+
+      <!-- Status Row -->
+      <div class="live-status-row">
+        <div class="live-status-card">
+          <div class="live-status-label">Engine Status</div>
+          <div class="live-status-value" id="ls-engine-status">WAITING</div>
+        </div>
+        <div class="live-status-card">
+          <div class="live-status-label">Simulated Event Time</div>
+          <div class="live-status-value live-status-value--mono" id="ls-event-time">--</div>
+        </div>
+        <div class="live-status-card">
+          <div class="live-status-label">Trips in View</div>
+          <div class="live-status-value" id="ls-trips-count">0</div>
+        </div>
+        <div class="live-status-card">
+          <div class="live-status-label">Active Zones</div>
+          <div class="live-status-value" id="ls-zones-count">0</div>
+        </div>
+        <div class="live-status-card">
+          <div class="live-status-label">High-Demand Hotspots</div>
+          <div class="live-status-value" id="ls-hotspots-count">0</div>
+        </div>
+        <div class="live-status-card">
+          <div class="live-status-label">Live MAE</div>
+          <div class="live-status-value" id="ls-mae">--</div>
+        </div>
+      </div>
+
+      <!-- Live Trip Predictions Table -->
+      <div class="card" style="margin-bottom: 16px;">
+        <h3 class="card-title">Live Trip Predictions</h3>
+        <div class="table-scroll">
+          <table class="data-table" id="ls-fares-table">
+            <thead>
+              <tr>
+                <th>Event Time</th>
+                <th>Pickup Zone</th>
+                <th>Distance (mi)</th>
+                <th>Actual Fare</th>
+                <th>Predicted Fare</th>
+                <th>Absolute Error</th>
+              </tr>
+            </thead>
+            <tbody id="ls-fares-body">
+              <tr><td colspan="6" class="table-empty">Waiting for streaming data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Map inside Live-Stream tab -->
+      <div class="card map-card" style="margin-bottom: 16px;">
+        <h3 class="card-title">Live Pickup Location Map <span class="map-badge" id="live-map-badge">Live</span></h3>
+        <div id="live-map" class="map-container"></div>
+      </div>
+
+      <!-- Active Hotspot Zones Table -->
+      <div class="card">
+        <h3 class="card-title">Active Demand Regimes</h3>
+        <div class="table-scroll">
+          <table class="data-table" id="ls-hotspots-table">
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Borough</th>
+                <th>Pickups (Trailing 1hr)</th>
+                <th>Demand Regime</th>
+                <th>Window End</th>
+              </tr>
+            </thead>
+            <tbody id="ls-hotspots-body">
+              <tr><td colspan="5" class="table-empty">Waiting for streaming data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="app.js?v=3.3"></script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+﻿model,dataset,rmse,mae,r2,within_2_dollar_accuracy,evaluation_time_seconds,test_rows
+TunedLinearRegression,TEST,7.788855916241943,4.402739571603882,0.7998207356431508,26.303384202996106,12.763391065,11306739

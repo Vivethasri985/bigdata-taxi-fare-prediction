@@ -1,0 +1,77 @@
+{
+  "lr_intercept": -2966.644553876994,
+  "num_features": {
+    "passenger_count": 0.13978710195833421,
+    "trip_distance": 2.1620723088344342,
+    "trip_duration_min": 0.36037768250421615,
+    "average_speed_mph": 0.05011188983652147,
+    "pickup_year": 1.4681808236231264,
+    "pickup_month": 0.0568126454590359,
+    "pickup_hour": 0.01275727074832219,
+    "day_of_week": 0.013896417111296083,
+    "is_weekend": -0.03607266766855654,
+    "temperature_2m": -0.00709078261070272,
+    "precipitation": 0.011272412173660202,
+    "wind_speed_10m": 0.008805888610626927,
+    "weather_code": 0.0029045018363764077
+  },
+  "kmeans_v2": {
+    "k": 3,
+    "silhouette": 0.639924,
+    "features": [
+      "log1p_pickups",
+      "pickup_hour"
+    ],
+    "scaler": {
+      "mean": [
+        2.3512,
+        11.8919
+      ],
+      "std": [
+        1.4589,
+        6.56134
+      ]
+    },
+    "clusters": {
+      "1": {
+        "name": "Low Demand",
+        "center": [
+          -0.66987231,
+          0.76305297
+        ],
+        "avg_pickups": 3.49,
+        "min_pickups": 1,
+        "max_pickups": 21,
+        "total_pickups": 5325920,
+        "avg_hour": 16.9,
+        "share": 0.0303
+      },
+      "0": {
+        "name": "Moderate Demand",
+        "center": [
+          -0.41091144,
+          -0.99577899
+        ],
+        "avg_pickups": 8.89,
+        "min_pickups": 1,
+        "max_pickups": 176,
+        "total_pickups": 16057207,
+        "avg_hour": 5.36,
+        "share": 0.0914
+      },
+      "2": {
+        "name": "High Demand (Hotspot)",
+        "center": [
+          1.36256235,
+          0.4888268
+        ],
+        "avg_pickups": 119.13,
+        "min_pickups": 15,
+        "max_pickups": 1072,
+        "total_pickups": 154373528,
+        "avg_hour": 15.1,
+        "share": 0.8783
+      }
+    }
+  }
+}

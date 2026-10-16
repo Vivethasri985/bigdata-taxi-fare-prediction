@@ -1,0 +1,28 @@
+# Hadoop DFS and cluster storage
+namenode/
+datanode1/
+datanode2/
+hadoop_data/
+*.lock
+*.vhdx
+
+# Build artifacts & Compiler cache
+target/
+*.class
+*.jar
+!spark-apps/surgesense_2.12-1.0.jar
+.metals/
+.bloop/
+.vscode/
+
+# Python cache & virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.tmp
+.pytest_cache/
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini

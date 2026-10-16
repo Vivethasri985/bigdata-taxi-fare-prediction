@@ -1,0 +1,2 @@
+﻿model,rmse,mae,r2,within_2_dollar_accuracy,training_time_seconds,validation_rows,hyperparameters
+TunedLinearRegression,8.124864205308821,4.639639285999466,0.7800600021102615,25.758174626058665,137.206379504,6696973,"maxIter=50,regParam=0.10,elasticNetParam=0.0,standardization=true"
