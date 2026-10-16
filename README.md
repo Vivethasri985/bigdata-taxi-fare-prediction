@@ -17,12 +17,7 @@ Distributed big data analytics and stream processing platform built on **Apache 
 | **Divya Rithanya S** | `CB.AI.U4AID24113` |
 | **Vivethasri C** | `CB.AI.U4AID24162` |
 
----
 
-## 📑 Presentation & Documentation
-* 📊 **Final Presentation Deck:** [`BigData_Taxi_Fare_Hotspot_Analytics_Presentation.pdf`](./BigData_Taxi_Fare_Hotspot_Analytics_Presentation.pdf) (15 Slides)
-
----
 
 ## 🚀 The 5 V's of Big Data
 
@@ -121,8 +116,7 @@ Using a **log(1 + pickup_count)** transform to remove extreme right-skew:
 │   ├── app.js                  # Frontend controllers & Leaflet GIS rendering
 │   └── chart_images/           # High-resolution error slicing & hotspot distribution charts
 ├── start_all.bat                # 1-Click production launch script
-├── stop_all.bat                 # Graceful cluster shutdown script
-└── BigData_Taxi_Fare_Hotspot_Analytics_Presentation.pdf # Project presentation deck
+└── stop_all.bat                 # Graceful cluster shutdown script
 ```
 
 ---
