@@ -31,8 +31,8 @@ Distributed big data analytics and stream processing platform built on **Apache 
 | **Volume** | **33.5M Rows (45.3 GB)** | Replicated across Hadoop HDFS with 128 MB block sizes across 2 DataNodes. |
 | **Variety** | **Multi-Format Ingestion** | Snappy Parquet (trips) + Nested JSON (Open-Meteo weather) + CSV/GeoJSON (263 taxi zones). |
 | **Velocity** | **3-Second Micro-Batches** | Spark Structured Streaming with a 1-hour stateful sliding window (5-minute slide). |
-| **Veracity** | **Audited Data Quality** | Outlier bounds applied: distance ($0.1 \le d \le 100\text{ mi}$), fare ($\$3 \le f \le \$500$); chronological 80/20 train/test split. |
-| **Value** | **$R^2 = 0.7998$, MAE \$4.40** | Transparent fare estimation and K-Means demand hotspot guidance for fleet dispatch. |
+| **Veracity** | **Audited Data Quality** | Outlier bounds applied: distance 0.1 to 100 miles, fare $3.00 to $500.00; chronological 80/20 train/test split. |
+| **Value** | **R² = 0.7998, MAE $4.40** | Transparent fare estimation and K-Means demand hotspot guidance for fleet dispatch. |
 
 ---
 
@@ -45,8 +45,8 @@ Distributed big data analytics and stream processing platform built on **Apache 
                                                  ┌─────────────────────┴─────────────────────┐
                                                  ▼                                           ▼
                                     [ Supervised Regression ]                   [ Unsupervised Clustering ]
-                                    19-Feature L-BFGS Ridge                     $\log(1+x)$ Transform + K-Means ($K=3$)
-                                    $R^2 = 0.7998$, MAE = \$4.40                 Silhouette = 0.6399 (+64%)
+                                    19-Feature L-BFGS Ridge                     log(1+x) Transform + K-Means (K = 3)
+                                    R² = 0.7998, MAE = $4.40                     Silhouette = 0.6399 (+64%)
                                                  │                                           │
                                                  └─────────────────────┬─────────────────────┘
                                                                        ▼
@@ -65,20 +65,20 @@ Distributed big data analytics and stream processing platform built on **Apache 
 ### 1. Supervised Fare Regression: Baseline vs. Tuned
 Evaluated on **6.7 Million chronologically held-out test trips** (Mar–May 2026):
 
-| Evaluation Metric | Baseline ($\lambda = 0.01$) | Tuned ($\lambda = 0.10$) |
+| Evaluation Metric | Baseline (λ = 0.01) | Tuned (λ = 0.10) |
 | :--- | :---: | :---: |
-| **R-Squared Score ($R^2$)** | 0.799582 | **0.799821** |
-| **Root Mean Squared Error (RMSE)** | \$7.7935 | **\$7.7889** |
-| **Mean Absolute Error (MAE)** | \$4.4118 | **\$4.4027** |
-| **Tolerance Accuracy (Within $\pm$\$2.00)** | 26.0683% | **26.3034% (1.76M trips)** |
+| **R-Squared Score (R²)** | 0.799582 | **0.799821** |
+| **Root Mean Squared Error (RMSE)** | $7.7935 | **$7.7889** |
+| **Mean Absolute Error (MAE)** | $4.4118 | **$4.4027** |
+| **Tolerance Accuracy (Within ±$2.00)** | 26.0683% | **26.3034% (1.76M trips)** |
 
-### 2. Unsupervised Demand Hotspots: K-Means Clustering ($K=3$)
-Using a **$\log(1 + \text{pickup\_count})$** transform to remove extreme right-skew:
-* **Optimal Clusters ($K=3$):** Validated across $K \in [2, 8]$ with peak Silhouette Score $= \mathbf{0.6399}$ (+64% over raw feature space).
+### 2. Unsupervised Demand Hotspots: K-Means Clustering (K = 3)
+Using a **log(1 + pickup_count)** transform to remove extreme right-skew:
+* **Optimal Clusters (K = 3):** Validated across K from 2 to 8 with peak Silhouette Score = **0.6399** (+64% over raw feature space).
 * **Demand Regimes:**
-  * **Low Demand:** $\approx 3.5\text{ trips/hr}$
-  * **Moderate Demand:** $\approx 8.9\text{ trips/hr}$
-  * **High-Demand Hotspot:** $\mathbf{119.1\text{ trips/hr}}$ (Represents 87.8% of citywide volume concentrated in Upper East Side, JFK Airport, and Midtown).
+  * **Low Demand:** ~3.5 trips/hour
+  * **Moderate Demand:** ~8.9 trips/hour
+  * **High-Demand Hotspot:** **119.1 trips/hour** (Represents 87.8% of citywide volume concentrated in Upper East Side, JFK Airport, and Midtown).
 
 ---
 
